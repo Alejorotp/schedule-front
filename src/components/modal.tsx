@@ -9,7 +9,7 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-96 relative">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-80% m-5 relative">
         
         {/* Botón de cerrar */}
         <button
