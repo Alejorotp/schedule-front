@@ -29,7 +29,7 @@ function Sidebar() {
       >
         {/* Logo */}
         <div className="p-4 text-xl font-bold border-b border-gray-700">
-          Mi Dashboard
+          Mis cursos
         </div>
 
         {/* Links */}
@@ -38,10 +38,10 @@ function Sidebar() {
             🏠 Inicio
           </a>
           <a href="#" className="block p-2 rounded hover:bg-gray-700">
-            📊 Estadísticas
+            📊 Asistencia
           </a>
           <a href="#" className="block p-2 rounded hover:bg-gray-700">
-            ⚙️ Configuración
+            ⚙️ Sidebar únicamente estética
           </a>
         </nav>
 

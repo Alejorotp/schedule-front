@@ -1,9 +1,10 @@
 import Card from "./card";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "./button";
 import Modal from "./modal";
 import SelectableCard from "./selectablecard";
 import SchedulePicker from "./schedulepicker";
+import useApi from "../useApi";
 
 type Curso = {
   cardTitle: string;
@@ -14,6 +15,8 @@ type Curso = {
   sch?: Schedule[];
   tch?: string;
   room?: string;
+  id_asign?: number;
+  id?: number;
 };
 
 interface Schedule {
@@ -23,83 +26,37 @@ interface Schedule {
 }
 
 function Dashboard() {
-  const [Content, setContent] = useState<Curso[]>([
-    {
-      cardTitle: "Card1",
-      nrc: 2105,
-      desc: "descripcion descriptiva",
-      cred: 45,
-      dept: "crazy",
-      sch: [],
-      tch: "jorge",
-      room: "curso1",
-    },
-    {
-      cardTitle: "card2",
-      nrc: 2145,
-      desc: "descripcion descriptiva",
-      cred: 45,
-      dept: "crazy",
-      sch: [],
-      tch: "el curioso",
-      room: "tommy wiseau",
-    },
-  ]);
-  const [Templates, setTemplates] = useState<Curso[]>([
-    {
-      cardTitle: "asing 1",
-      desc: "descripcion descriptiva",
-      cred: 45,
-      dept: "crazy",
-    },
-    {
-      cardTitle: "Tasign 2",
-      desc: "descripcion descriptiva",
-      cred: 45,
-      dept: "crazy",
-    },
-  ]);
+  const [Content, setContent] = useState<Curso[]>([]);
+  const [Templates, setTemplates] = useState<Curso[]>([]);
+  const { getCurso, getAsignatura, postAsignatura, postCurso, patchCurso } =
+    useApi();
+
+  const fetchData = useCallback(async () => {
+    try {
+      const cursos = await getCurso();
+      setContent(cursos);
+
+      const asignaturas = await getAsignatura();
+      setTemplates(asignaturas);
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+    }
+  }, []); // 👈 no depende de nada → estable
+
+  useEffect(() => {
+    user ? setTeacher(user) : "";
+    console.log("usefe");
+    fetchData();
+  }, [fetchData]);
+
+  const params = new URLSearchParams(window.location.search);
+  const user = params.get("user");
   const [teacher, setTeacher] = useState("Usuario autenticado");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("");
   const [step, setStep] = useState<number>(1);
   const [selectedCard, setSelectedCard] = useState<Curso>();
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const isCurso = (x: unknown): x is Curso => {
-    return (
-      typeof x === "object" &&
-      x !== null &&
-      "cardTitle" in x &&
-      "nrc" in x &&
-      "desc" in x &&
-      "cred" in x &&
-      "dept" in x &&
-      "sch" in x
-    );
-  };
-
-  const handleSchedule = (e: Schedule[]) => {
-    setSchedules(e);
-
-    if (isCurso(selectedCard)) {
-      setSelectedCard((prev) => ({
-        cardTitle: prev?.cardTitle ?? "",
-        nrc: prev?.nrc ?? 0,
-        desc: prev?.desc ?? "",
-        cred: prev?.cred ?? 0,
-        dept: prev?.dept ?? "",
-        tch: prev?.tch ?? "",
-        room: prev?.room ?? "",
-      }));
-    } else {
-      setSelectedCard((prev) => ({
-        cardTitle: prev?.cardTitle ?? "",
-        desc: prev?.desc ?? "",
-        cred: prev?.cred ?? 0,
-        dept: prev?.dept ?? "",
-      }));
-    }
-  };
+  const [id_asign, setIdAsign] = useState<number>(0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,40 +68,47 @@ function Dashboard() {
     >
   ) => {
     const { name, value } = e.target;
-    const teach = teacher;
 
-    setSelectedCard((prev) => ({
-      cardTitle: name === "cardTitle" ? value : prev?.cardTitle ?? "",
-      nrc: name === "nrc" ? Number(value) : prev?.nrc ?? 0,
-      desc: name === "desc" ? value : prev?.desc ?? "",
-      cred: name === "cred" ? Number(value) : prev?.cred ?? 0,
-      dept: name === "dept" ? value : prev?.dept ?? "",
-      sch: prev?.sch ?? [],
-      tch: "" + teach,
-      room: name === "room" ? value : prev?.room ?? "",
-    }));
+    setSelectedCard((prev) =>
+      prev
+        ? {
+            ...prev,
+            [name]: name === "nrc" || name === "cred" ? Number(value) : value,
+            tch: teacher,
+          }
+        : undefined
+    );
   };
 
   const onConfirm = (e: number) => {
     if (e == 1) {
-      selectedCard ? setTemplates([...Templates, selectedCard]) : "";
+      if (selectedCard) {
+        setTemplates([...Templates, selectedCard]);
+        postAsignatura(selectedCard);
+      }
     } else if (e == 2) {
-      selectedCard ? setContent([...Content, selectedCard]) : "";
+      if (selectedCard) {
+        setContent([...Content, selectedCard]);
+        postCurso(selectedCard, "2025-30", id_asign);
+      }
     } else if (e == 3) {
-      selectedCard
-        ? setContent((prev) =>
-            prev.map((card) =>
-              card.nrc === selectedCard.nrc
-                ? { ...card, ...selectedCard }
-                : card
-            )
-          )
-        : "";
+      if (selectedCard) {
+        patchCurso(
+          selectedCard.id ?? 0,
+          selectedCard,
+          "2025-30",
+          selectedCard?.id_asign ?? 0
+        );
+      }
     }
+    setTimeout(() => {
+      fetchData();
+    }, 500);
   };
 
-  const toggleCard = (id: string) => {
+  const toggleCard = (id: string, nrc: number) => {
     setSelectedId(id);
+    setIdAsign(nrc);
   };
 
   return (
@@ -163,7 +127,7 @@ function Dashboard() {
               {Templates.map((card) => (
                 <SelectableCard
                   title={card.cardTitle}
-                  nrc={card.nrc}
+                  nrc={card.nrc ?? 0}
                   cred={card.cred}
                   desc={card.desc}
                   dept={card.dept}
@@ -224,39 +188,14 @@ function Dashboard() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold">Título</label>
-                <input
-                  type="text"
-                  name="cardTitle"
-                  value={selectedCard?.cardTitle ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
+                <label>{selectedCard?.cardTitle ?? ""}</label>
               </div>
-              <div>
-                <label className="block text-sm font-semibold">
-                  Descripción
-                </label>
-                <textarea
-                  name="desc"
-                  value={selectedCard?.desc ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
+
               <div>
                 <label className="block text-sm font-semibold">NRC</label>
                 <textarea
                   name="nrc"
                   value={selectedCard?.nrc ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold">Creditos</label>
-                <textarea
-                  name="cred"
-                  value={selectedCard?.cred ?? ""}
                   onChange={handleChange}
                   className="w-full border rounded-lg p-2"
                 />
@@ -273,7 +212,14 @@ function Dashboard() {
               <h1 className="text-xl font-bold mb-4">
                 Selecciona tus horarios
               </h1>
-              <SchedulePicker schedules={schedules} onChange={handleSchedule} />
+              <SchedulePicker
+                schedules={selectedCard?.sch ?? []}
+                onChange={(newSchedules) =>
+                  setSelectedCard((prev) =>
+                    prev ? { ...prev, sch: newSchedules } : prev
+                  )
+                }
+              />
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -293,39 +239,14 @@ function Dashboard() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold">Título</label>
-                <input
-                  type="text"
-                  name="cardTitle"
-                  value={selectedCard?.cardTitle ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
+                <label>{selectedCard?.cardTitle ?? ""}</label>
               </div>
-              <div>
-                <label className="block text-sm font-semibold">
-                  Descripción
-                </label>
-                <textarea
-                  name="desc"
-                  value={selectedCard?.desc ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
+
               <div>
                 <label className="block text-sm font-semibold">NRC</label>
                 <textarea
                   name="nrc"
                   value={selectedCard?.nrc ?? ""}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold">Creditos</label>
-                <textarea
-                  name="cred"
-                  value={selectedCard?.cred ?? ""}
                   onChange={handleChange}
                   className="w-full border rounded-lg p-2"
                 />
@@ -342,7 +263,14 @@ function Dashboard() {
               <h1 className="text-xl font-bold mb-4">
                 Selecciona tus horarios
               </h1>
-              <SchedulePicker schedules={schedules} onChange={handleSchedule} />
+              <SchedulePicker
+                schedules={selectedCard?.sch ?? []}
+                onChange={(newSchedules) =>
+                  setSelectedCard((prev) =>
+                    prev ? { ...prev, sch: newSchedules } : prev
+                  )
+                }
+              />
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -393,10 +321,7 @@ function Dashboard() {
                   className="w-full border rounded-lg p-2"
                 />
               </div>
-              <h1 className="text-xl font-bold mb-4">
-                Selecciona tus horarios
-              </h1>
-              <SchedulePicker schedules={schedules} onChange={handleSchedule} />
+
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -480,7 +405,7 @@ function Dashboard() {
         {Content.map((card) => (
           <Card
             title={card.cardTitle}
-            nrc={card.nrc}
+            nrc={card.nrc ?? 0}
             cred={card.cred}
             desc={card.desc}
             dept={card.dept}
@@ -504,6 +429,7 @@ function Dashboard() {
           onAction={() => {
             setIsModalOpen(true);
             setStep(1);
+            fetchData();
           }}
           label={"Crear Curso"}
         ></Button>
@@ -511,6 +437,7 @@ function Dashboard() {
           onAction={() => {
             setIsModalOpen(true);
             setStep(4);
+            fetchData();
           }}
           label={"Crear Asignaturas"}
         ></Button>

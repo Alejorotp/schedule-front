@@ -35,13 +35,13 @@ const SchedulePicker: React.FC<SchedulePickerProps> = ({ schedules, onChange }) 
             className="border rounded p-2"
           >
             <option value="">Día</option>
-            <option value="Mon">Lun</option>
-            <option value="Tue">Mar</option>
-            <option value="Wed">Mié</option>
-            <option value="Thu">Jue</option>
-            <option value="Fri">Vie</option>
-            <option value="Sat">Sáb</option>
-            <option value="Sun">Dom</option>
+            <option value="lun">Lun</option>
+            <option value="mar">Mar</option>
+            <option value="mie">Mié</option>
+            <option value="jue">Jue</option>
+            <option value="vie">Vie</option>
+            <option value="sab">Sáb</option>
+            <option value="dom">Dom</option>
           </select>
 
           {/* Hora inicio */}
