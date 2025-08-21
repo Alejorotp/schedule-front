@@ -16,7 +16,6 @@ type Curso = {
   room?: string;
 };
 
-
 interface Schedule {
   day: string;
   startTime: string;
@@ -60,9 +59,9 @@ function Dashboard() {
       dept: "crazy",
     },
   ]);
-  const [teacher, setTeacher] = useState("Usuario autenticado")
+  const [teacher, setTeacher] = useState("Usuario autenticado");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string>('');
+  const [selectedId, setSelectedId] = useState<string>("");
   const [step, setStep] = useState<number>(1);
   const [selectedCard, setSelectedCard] = useState<Curso>();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -112,18 +111,18 @@ function Dashboard() {
     >
   ) => {
     const { name, value } = e.target;
-    const teach = teacher
-    
-      setSelectedCard((prev) => ({
-        cardTitle: name === "cardTitle" ? value : prev?.cardTitle ?? "",
-        nrc: name === "nrc" ? Number(value) : prev?.nrc ?? 0,
-        desc: name === "desc" ? value : prev?.desc ?? "",
-        cred: name === "cred" ? Number(value) : prev?.cred ?? 0,
-        dept: name === "dept" ? value : prev?.dept ?? "",
-        sch: prev?.sch ?? [],
-        tch: ""+teach,
-        room: name === "room" ? value : prev?.room ?? "",
-      }));
+    const teach = teacher;
+
+    setSelectedCard((prev) => ({
+      cardTitle: name === "cardTitle" ? value : prev?.cardTitle ?? "",
+      nrc: name === "nrc" ? Number(value) : prev?.nrc ?? 0,
+      desc: name === "desc" ? value : prev?.desc ?? "",
+      cred: name === "cred" ? Number(value) : prev?.cred ?? 0,
+      dept: name === "dept" ? value : prev?.dept ?? "",
+      sch: prev?.sch ?? [],
+      tch: "" + teach,
+      room: name === "room" ? value : prev?.room ?? "",
+    }));
   };
 
   const onConfirm = (e: number) => {
@@ -131,6 +130,16 @@ function Dashboard() {
       selectedCard ? setTemplates([...Templates, selectedCard]) : "";
     } else if (e == 2) {
       selectedCard ? setContent([...Content, selectedCard]) : "";
+    } else if (e == 3) {
+      selectedCard
+        ? setContent((prev) =>
+            prev.map((card) =>
+              card.nrc === selectedCard.nrc
+                ? { ...card, ...selectedCard }
+                : card
+            )
+          )
+        : "";
     }
   };
 
@@ -278,6 +287,78 @@ function Dashboard() {
           </div>
         )}
 
+        {step == 7 && (
+          <div className="p-6">
+            <h2 className="text-xl font-bold mb-4">Editar plantilla</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold">Título</label>
+                <input
+                  type="text"
+                  name="cardTitle"
+                  value={selectedCard?.cardTitle ?? ""}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold">
+                  Descripción
+                </label>
+                <textarea
+                  name="desc"
+                  value={selectedCard?.desc ?? ""}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold">NRC</label>
+                <textarea
+                  name="nrc"
+                  value={selectedCard?.nrc ?? ""}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold">Creditos</label>
+                <textarea
+                  name="cred"
+                  value={selectedCard?.cred ?? ""}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold">Salón</label>
+                <textarea
+                  name="room"
+                  value={selectedCard?.room ?? ""}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+              <h1 className="text-xl font-bold mb-4">
+                Selecciona tus horarios
+              </h1>
+              <SchedulePicker schedules={schedules} onChange={handleSchedule} />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  onClick={() => {
+                    onConfirm(3);
+                    setIsModalOpen(false);
+                  }}
+                  className="px-4 py-2 rounded bg-green-600 text-white"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {step == 5 && (
           <div className="p-6">
             <h2 className="text-xl font-bold mb-4">Editar plantilla</h2>
@@ -373,8 +454,8 @@ function Dashboard() {
                 desc={selectedCard?.desc ?? ""}
                 dept={selectedCard?.dept ?? ""}
                 sch={selectedCard?.sch}
-                room ={selectedCard?.room}
-                tch = {selectedCard?.tch}
+                room={selectedCard?.room}
+                tch={selectedCard?.tch}
               />
               <div className="grid grid-cols-3 gap-4 mt-5">
                 <Button
@@ -404,9 +485,18 @@ function Dashboard() {
             desc={card.desc}
             dept={card.dept}
             sch={card.sch}
-            tch ={card.tch}
+            tch={card.tch}
             room={card.room}
-          />
+          >
+            <Button
+              label="Editar"
+              onAction={() => {
+                setStep(7);
+                setIsModalOpen(true);
+                setSelectedCard(card);
+              }}
+            ></Button>
+          </Card>
         ))}
       </div>
       <div className="flex gap-4">

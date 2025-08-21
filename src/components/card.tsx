@@ -1,3 +1,6 @@
+import Button from "./button";
+
+
 interface Schedule {
   day: string;
   startTime: string;
@@ -13,9 +16,10 @@ interface Content {
   sch?: Schedule[];
   tch?: string;
   room?: string;
+  children?: React.ReactNode;
 }
 
-function Card({ title, nrc, desc, cred, dept, sch = [], tch, room }: Content) {
+function Card({ title, nrc, desc, cred, dept, sch = [], tch, room, children }: Content) {
   return (
     <div className="bg-white rounded-xl shadow p-4">
       <h3 className="text-lg font-semibold text-gray-800 mb-1">
@@ -29,6 +33,8 @@ function Card({ title, nrc, desc, cred, dept, sch = [], tch, room }: Content) {
         <li>{"Departamento: " + dept}</li>
         <li>{"Profesor: "+ tch}</li>
         <li>{"Salon: "+ room}</li>
+        <li className="mt-5">{children}</li>
+        
       </ul>
 
       {sch.length > 0 && (
