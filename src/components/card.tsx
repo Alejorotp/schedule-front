@@ -10,14 +10,16 @@ interface Content {
   desc: string;
   cred: number;
   dept: string;
-  sch?: Schedule[]; // <-- opcional
+  sch?: Schedule[];
+  tch?: string;
+  room?: string;
 }
 
-function Card({ title, nrc, desc, cred, dept, sch = [] }: Content) {
+function Card({ title, nrc, desc, cred, dept, sch = [], tch, room }: Content) {
   return (
     <div className="bg-white rounded-xl shadow p-4">
       <h3 className="text-lg font-semibold text-gray-800 mb-1">
-        {title + " - " + nrc}
+        {nrc? title + " - " + nrc : title}
       </h3>
       <ul className="text-slate-900 gap-4">
         <li>
@@ -25,6 +27,8 @@ function Card({ title, nrc, desc, cred, dept, sch = [] }: Content) {
         </li>
         <li className="mt-5">{"Créditos: " + cred}</li>
         <li>{"Departamento: " + dept}</li>
+        <li>{"Profesor: "+ tch}</li>
+        <li>{"Salon: "+ room}</li>
       </ul>
 
       {sch.length > 0 && (
